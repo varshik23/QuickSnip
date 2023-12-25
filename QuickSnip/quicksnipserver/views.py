@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework import generics
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from .models import urls
 from .serializers import urlsSerializer, RegisterSerializer, UserSerializer
+
 
 # Create your views here.
 #Register API
@@ -19,12 +21,12 @@ class RegisterApi(generics.GenericAPIView):
             "message": "User Created Successfully.  Now perform Login to get your token",
         })
 
+@permission_classes([IsAuthenticated])
 class URLShortenView(generics.ListCreateAPIView):
     serializer_class = urlsSerializer
 
     def create(self, request, *args, **kwargs):
         long_url = request.data.get('url')
-        print(request)
         alias = ''
         if request.data.get('alias'):
             alias = request.data.get('alias')
@@ -41,6 +43,7 @@ class URLShortenView(generics.ListCreateAPIView):
             return Response({'error': 'Missing "long_url" in the request'}, status=400)
 
 @api_view(['GET'])
+@permission_classes([])
 def redirect_to_long_url(request, short_url_key):
     url = get_object_or_404(urls, short_url=short_url_key)
     return redirect(url.url)
