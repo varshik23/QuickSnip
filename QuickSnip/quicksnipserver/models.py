@@ -1,13 +1,10 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-# Create your models here.
-class users(models.Model):
-    username = models.CharField(max_length=50)
-    password_hash = models.CharField(max_length=255)
-
+# Create your models here
 class urls(models.Model):
     url = models.CharField(max_length=255)
-    # user = models.ForeignKey(users, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     short_url = models.CharField(max_length=255, primary_key=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)

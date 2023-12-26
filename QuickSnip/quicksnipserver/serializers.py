@@ -27,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
 class urlsSerializer(serializers.ModelSerializer):
     class Meta:
         model = urls
-        fields = ['url', 'short_url', 'date_created', 'date_updated']
+        fields = '__all__'
 
 class clicksSerializer(serializers.ModelSerializer):
     class Meta:

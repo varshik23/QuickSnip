@@ -6,12 +6,11 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView
 )
 
-# app_name = 'quicksnipserver'
 urlpatterns = [
-    path('quicksnipserver/Login/', TokenObtainPairView.as_view(), name='Login'),
-    path('quicksnipserver/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('quicksnipserver/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-    path('quicksnipserver/register/', RegisterApi.as_view(), name='register'),
-    path('quicksnipserver/shorten/', URLShortenView.as_view(), name='url-shorten'),
-    path('quicksnipserver/<str:short_url_key>/', redirect_to_long_url, name='redirect-to-long-url'),
+    path('login/', TokenObtainPairView.as_view(), name='Login'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('register/', RegisterApi.as_view(), name='register'),
+    path('shorten/', URLShortenView.as_view(), name='url-shorten'),
+    path('<str:short_url_key>/', redirect_to_long_url, name='redirect-to-long-url'),
 ]

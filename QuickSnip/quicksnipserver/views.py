@@ -33,7 +33,7 @@ class URLShortenView(generics.ListCreateAPIView):
         if long_url:
             # Generate a short URL key (you can use a more advanced method)
             short_url_key = "" if not alias else alias
-            url_data = {'url': long_url, 'short_url': short_url_key}
+            url_data = {'url': long_url, 'short_url': short_url_key, 'user': request.user.pk}
             serializer = self.get_serializer(data=url_data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
