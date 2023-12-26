@@ -42,6 +42,12 @@ class URLShortenView(generics.ListCreateAPIView):
         else:
             return Response({'error': 'Missing "long_url" in the request'}, status=400)
 
+@permission_classes([IsAuthenticated])
+class GetUrls(generics.ListCreateAPIView):
+    serializer_class = urlsSerializer
+    def get_queryset(self):
+        return urls.objects.filter(user=self.request.user.pk)
+
 @api_view(['GET'])
 @permission_classes([])
 def redirect_to_long_url(request, short_url_key):
