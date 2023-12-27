@@ -1,3 +1,5 @@
+import hashlib
+
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework import generics
 from rest_framework.decorators import api_view, permission_classes
@@ -7,8 +9,6 @@ from rest_framework.permissions import IsAuthenticated
 from .models import urls
 from .serializers import urlsSerializer, RegisterSerializer, UserSerializer
 
-
-# Create your views here.
 #Register API
 class RegisterApi(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -32,7 +32,7 @@ class URLShortenView(generics.ListCreateAPIView):
             alias = request.data.get('alias')
         if long_url:
             # Generate a short URL key (you can use a more advanced method)
-            short_url_key = "" if not alias else alias
+            short_url_key = hashlib.shake_256(long_url.encode()).hexdigest(5) if not alias else alias
             url_data = {'url': long_url, 'short_url': short_url_key, 'user': request.user.pk}
             serializer = self.get_serializer(data=url_data)
             serializer.is_valid(raise_exception=True)
