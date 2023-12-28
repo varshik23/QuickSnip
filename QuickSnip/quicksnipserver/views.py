@@ -6,8 +6,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .models import urls
-from .serializers import urlsSerializer, RegisterSerializer, UserSerializer
+from .models import urls, clicks
+from .serializers import urlsSerializer, RegisterSerializer, UserSerializer, clicksSerializer
 
 #Register API
 class RegisterApi(generics.GenericAPIView):
@@ -43,13 +43,30 @@ class URLShortenView(generics.ListCreateAPIView):
             return Response({'error': 'Missing "long_url" in the request'}, status=400)
 
 @permission_classes([IsAuthenticated])
-class GetUrls(generics.ListCreateAPIView):
+class ListUrls(generics.ListCreateAPIView):
     serializer_class = urlsSerializer
     def get_queryset(self):
         return urls.objects.filter(user=self.request.user.pk)
 
+@permission_classes([IsAuthenticated])
+class GetUrlData(generics.RetrieveAPIView):
+    serializer_class = urlsSerializer
+    lookup_field = 'id'
+    def get_queryset(self, *args, **kwargs):
+        return urls.objects.filter(id=self.kwargs['id'])
+
+
 @api_view(['GET'])
 @permission_classes([])
-def redirect_to_long_url(request, short_url_key):
+def redirect_url(request, short_url_key):
     url = get_object_or_404(urls, short_url=short_url_key)
+    if clicks.objects.filter(url=url.pk).exists():
+        click = clicks.objects.get(url=url.pk)
+        click.number_of_clicks += 1
+        click.save()
+    else:
+        serializer = clicksSerializer(data={'url': url.pk, 'number_of_clicks': 1})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+    
     return redirect(url.url)
