@@ -26,4 +26,7 @@ class urlsSerializer(serializers.ModelSerializer):
 class clicksSerializer(serializers.ModelSerializer):
     class Meta:
         model = clicks
-        fields = ['pk', 'url', 'click_timestamp', 'number_of_clicks', 'ip_address', 'user_agent', 'referrer', 'country', 'city', 'timezone']
+        fields = '__all__'
+
+    def create(self, validated_data):
+        return clicks.objects.create(**validated_data)

@@ -2,14 +2,16 @@ import hashlib
 
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework import generics
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
 
-from .models import urls
-from .serializers import urlsSerializer, RegisterSerializer, UserSerializer
+from django.utils.decorators import method_decorator
 
-#Register API
+from .models import urls, clicks
+from .serializers import urlsSerializer, RegisterSerializer, UserSerializer, clicksSerializer
+
 class RegisterApi(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self, request, *args,  **kwargs):
@@ -23,15 +25,14 @@ class RegisterApi(generics.GenericAPIView):
 
 @permission_classes([IsAuthenticated])
 class URLShortenView(generics.ListCreateAPIView):
+    http_method_names = ['post']   
     serializer_class = urlsSerializer
-
     def create(self, request, *args, **kwargs):
         long_url = request.data.get('url')
         alias = ''
         if request.data.get('alias'):
             alias = request.data.get('alias')
         if long_url:
-            # Generate a short URL key (you can use a more advanced method)
             short_url_key = hashlib.shake_256(long_url.encode()).hexdigest(5) if not alias else alias
             url_data = {'url': long_url, 'short_url': short_url_key, 'user': request.user.pk}
             serializer = self.get_serializer(data=url_data)
@@ -43,13 +44,31 @@ class URLShortenView(generics.ListCreateAPIView):
             return Response({'error': 'Missing "long_url" in the request'}, status=400)
 
 @permission_classes([IsAuthenticated])
-class GetUrls(generics.ListCreateAPIView):
+class ListUrls(generics.ListCreateAPIView):
+    http_method_names = ['get']
     serializer_class = urlsSerializer
+    @swagger_auto_schema(query_serializer=urlsSerializer)
     def get_queryset(self):
         return urls.objects.filter(user=self.request.user.pk)
 
+@permission_classes([IsAuthenticated])
+class GetUrlData(generics.RetrieveAPIView):
+    serializer_class = urlsSerializer
+    lookup_field = 'id'
+    def get_queryset(self, *args, **kwargs):
+        return urls.objects.filter(id=self.kwargs['id'])
+
 @api_view(['GET'])
 @permission_classes([])
-def redirect_to_long_url(request, short_url_key):
+def redirect_url(request, short_url_key):
     url = get_object_or_404(urls, short_url=short_url_key)
+    if clicks.objects.filter(url=url.pk).exists():
+        click = clicks.objects.get(url=url.pk)
+        click.number_of_clicks += 1
+        click.save()
+    else:
+        serializer = clicksSerializer(data={'url': url.pk, 'number_of_clicks': 1})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+    
     return redirect(url.url)
