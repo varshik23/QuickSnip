@@ -1,13 +1,13 @@
 import hashlib
 
 from django.shortcuts import get_object_or_404, redirect
+
 from rest_framework import generics
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_yasg.utils import swagger_auto_schema
 
-from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
 
 from .models import urls, clicks
 from .serializers import urlsSerializer, RegisterSerializer, UserSerializer, clicksSerializer
@@ -52,11 +52,23 @@ class ListUrls(generics.ListCreateAPIView):
         return urls.objects.filter(user=self.request.user.pk)
 
 @permission_classes([IsAuthenticated])
-class GetUrlData(generics.RetrieveAPIView):
+class UrlData(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
     serializer_class = urlsSerializer
     lookup_field = 'id'
     def get_queryset(self, *args, **kwargs):
         return urls.objects.filter(id=self.kwargs['id'])
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = urlsSerializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=200)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'message': 'URL Deleted Successfully'}, status=200)
 
 @api_view(['GET'])
 @permission_classes([])
