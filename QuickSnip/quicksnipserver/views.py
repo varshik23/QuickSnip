@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import urls, clicks
 from .serializers import urlsSerializer, RegisterSerializer, UserSerializer, clicksSerializer
@@ -27,7 +28,18 @@ class RegisterApi(generics.GenericAPIView):
 class URLShortenView(generics.ListCreateAPIView):
     http_method_names = ['post']   
     serializer_class = urlsSerializer
-    def create(self, request, *args, **kwargs):
+    @swagger_auto_schema(
+        request_body= openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['url'],
+            properties={
+                'url': openapi.Schema(type=openapi.TYPE_STRING, description='URL to be shortened'),
+                'alias': openapi.Schema(type=openapi.TYPE_STRING, description='Alias for the shortened URL'),
+            }
+        ),
+        responses = {'200': openapi.Response(description = 'Response description is', schema = urlsSerializer)},
+    )
+    def post(self, request, *args, **kwargs):
         long_url = request.data.get('url')
         alias = ''
         if request.data.get('alias'):
@@ -53,6 +65,7 @@ class ListUrls(generics.ListCreateAPIView):
 
 @permission_classes([IsAuthenticated])
 class UrlData(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
+    http_method_names = ['get', 'put', 'delete']
     serializer_class = urlsSerializer
     lookup_field = 'id'
     def get_queryset(self, *args, **kwargs):
@@ -65,10 +78,11 @@ class UrlData(generics.RetrieveAPIView, generics.UpdateAPIView, generics.Destroy
         self.perform_update(serializer)
         return Response(serializer.data, status=200)
 
-    def destroy(self, request, *args, **kwargs):
+    @swagger_auto_schema(responses={ 200: openapi.Response(description='URL Deleted Successfully') })
+    def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({'message': 'URL Deleted Successfully'}, status=200)
+        return Response({'message': 'URL Deleted Successfully'}, status=204)
 
 @api_view(['GET'])
 @permission_classes([])
