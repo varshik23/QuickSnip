@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'drf_yasg', # Swagger
+    'corsheaders', # CORS
 ]
 
 MIDDLEWARE = [
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS
 ]
 
 REST_FRAMEWORK = {
@@ -76,6 +78,8 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+CORS_ORIGIN_ALLOW_ALL = True # CORS
 
 ROOT_URLCONF = 'QuickSnip.urls'
 
