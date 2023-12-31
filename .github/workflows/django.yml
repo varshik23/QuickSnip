@@ -34,8 +34,8 @@ jobs:
         python3 -m pip install -r requirements.txt
     - name: Run Migrations
       run: |
-        python3 manage.py makemigrations
-        python3 manage.py migrate
+        python3 QuickSnip/manage.py makemigrations
+        python3 QuickSnip/manage.py migrate
     - name: Run Tests
       run: |
-        python3 manage.py test  
+        python3 QuickSnip/manage.py test  
