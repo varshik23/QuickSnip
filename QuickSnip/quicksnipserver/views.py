@@ -1,13 +1,14 @@
 import hashlib
 
 from django.shortcuts import get_object_or_404, redirect
+
 from rest_framework import generics
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_yasg.utils import swagger_auto_schema
 
-from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import urls, clicks
 from .serializers import urlsSerializer, RegisterSerializer, UserSerializer, clicksSerializer
@@ -27,7 +28,18 @@ class RegisterApi(generics.GenericAPIView):
 class URLShortenView(generics.ListCreateAPIView):
     http_method_names = ['post']   
     serializer_class = urlsSerializer
-    def create(self, request, *args, **kwargs):
+    @swagger_auto_schema(
+        request_body= openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['url'],
+            properties={
+                'url': openapi.Schema(type=openapi.TYPE_STRING, description='URL to be shortened'),
+                'alias': openapi.Schema(type=openapi.TYPE_STRING, description='Alias for the shortened URL'),
+            }
+        ),
+        responses = {'200': openapi.Response(description = 'Response description is', schema = urlsSerializer)},
+    )
+    def post(self, request, *args, **kwargs):
         long_url = request.data.get('url')
         alias = ''
         if request.data.get('alias'):
@@ -52,11 +64,25 @@ class ListUrls(generics.ListCreateAPIView):
         return urls.objects.filter(user=self.request.user.pk)
 
 @permission_classes([IsAuthenticated])
-class GetUrlData(generics.RetrieveAPIView):
+class UrlData(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
+    http_method_names = ['get', 'put', 'delete']
     serializer_class = urlsSerializer
     lookup_field = 'id'
     def get_queryset(self, *args, **kwargs):
         return urls.objects.filter(id=self.kwargs['id'])
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = urlsSerializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=200)
+
+    @swagger_auto_schema(responses={ 200: openapi.Response(description='URL Deleted Successfully') })
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'message': 'URL Deleted Successfully'}, status=204)
 
 @api_view(['GET'])
 @permission_classes([])
