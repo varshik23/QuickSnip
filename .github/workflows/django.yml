@@ -8,13 +8,20 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.9, '3.10']
-
+    services:
+      postgres: # we need a postgres docker image to be booted a side car service to run the tests that needs a db
+        image: postgres
+        env: # the environment variable must match with app/settings.py if block of DATBASES variable otherwise test will fail due to connectivity issue.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: github-actions
+        ports:
+          - 5432:5432
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -25,3 +32,10 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
+    - name: Run Migrations
+      run: |
+        python3 manage.py makemigrations
+        python3 manage.py migrate
+    - name: Run Tests
+      run: |
+        python3 manage.py test  
