@@ -13,6 +13,7 @@ from drf_yasg import openapi
 from .models import urls, clicks
 from .serializers import urlsSerializer, RegisterSerializer, UserSerializer, clicksSerializer
 
+@permission_classes([])
 class RegisterApi(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self, request, *args,  **kwargs):
