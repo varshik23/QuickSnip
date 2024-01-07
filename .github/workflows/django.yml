@@ -29,6 +29,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Dependencies
+      working-directory: ./QuickSnip
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
