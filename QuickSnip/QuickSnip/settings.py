@@ -31,9 +31,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
 env_file = os.path.join(BASE_DIR, ".env")
 
+CI_FLAG = False
+
 if os.path.isfile(env_file):
     # Use a local secret file, if provided
     env.read_env(env_file)
+elif os.getenv('GITHUB_WORKFLOW'):
+    CI_FLAG = True
 elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
     # Pull secrets from Secret Manager
     project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
@@ -48,13 +52,12 @@ else:
     raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
 
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = env("SECRET_KEY") if not CI_FLAG else 'django-insecure-#o1^$^+@l8p5k0!+^_+4^+*r^+@l8p5k0!+^_+4^+*r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change this to "False" when you are ready for production
-DEBUG = env("DEBUG")
+DEBUG = env("DEBUG") if not CI_FLAG else True
 
 APPENGINE_URL = env("APPENGINE_URL", default=None)
 if APPENGINE_URL:
